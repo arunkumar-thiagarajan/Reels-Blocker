@@ -4,38 +4,68 @@
   const STORAGE_KEY = "reelsBlocker_youtube";
   let enabled = true;
 
-  const SHORTS_SELECTORS = [
-    // Shorts shelf on home page
-    'ytd-rich-shelf-renderer[is-shorts]',
-    'ytd-reel-shelf-renderer',
-    // Shorts tab in navigation
-    'ytd-mini-guide-entry-renderer a[title="Shorts"]',
-    'ytd-guide-entry-renderer a[title="Shorts"]',
-    // Shorts in search results
-    'ytd-video-renderer a[href*="/shorts/"]',
-    // Shorts badges and links in recommendations
-    'ytd-compact-video-renderer a[href*="/shorts/"]',
-    'ytd-grid-video-renderer a[href*="/shorts/"]',
-  ];
+  // Inject CSS rules for robust hiding that persists across DOM changes
+  const style = document.createElement("style");
+  style.id = "reels-blocker-yt-styles";
+  document.head.appendChild(style);
 
-  function hideShorts() {
+  const CSS_RULES = `
+    /* Shorts shelf on home/subscriptions page */
+    ytd-rich-shelf-renderer[is-shorts],
+    ytd-reel-shelf-renderer {
+      display: none !important;
+    }
+
+    /* Shorts tab in sidebar navigation */
+    ytd-guide-entry-renderer a[title="Shorts"],
+    ytd-mini-guide-entry-renderer a[title="Shorts"] {
+      display: none !important;
+    }
+
+    /* Shorts in search results and recommendations */
+    ytd-video-renderer:has(a[href*="/shorts/"]),
+    ytd-compact-video-renderer:has(a[href*="/shorts/"]),
+    ytd-grid-video-renderer:has(a[href*="/shorts/"]),
+    ytd-rich-item-renderer:has(a[href*="/shorts/"]) {
+      display: none !important;
+    }
+
+    /* Shorts badge/chip in various places */
+    ytd-rich-section-renderer:has(a[href*="/shorts/"]),
+    ytd-reel-item-renderer {
+      display: none !important;
+    }
+
+    /* Shorts notification chips */
+    yt-chip-cloud-chip-renderer:has([title="Shorts"]) {
+      display: none !important;
+    }
+
+    /* Shorts pivot bar item (tab bar on channel pages) */
+    yt-tab-shape[tab-title="Shorts"],
+    tp-yt-paper-tab:has(a[href*="/shorts"]) {
+      display: none !important;
+    }
+
+    /* Shorts page content itself */
+    ytd-shorts {
+      display: none !important;
+    }
+  `;
+
+  function enableCSS() {
+    style.textContent = CSS_RULES;
+  }
+
+  function disableCSS() {
+    style.textContent = "";
+  }
+
+  function redirectIfShorts() {
     if (!enabled) return;
 
-    // Hide elements matching selectors
-    SHORTS_SELECTORS.forEach((selector) => {
-      document.querySelectorAll(selector).forEach((el) => {
-        // Walk up to the nearest renderer parent for clean removal
-        const renderer = el.closest(
-          "ytd-rich-shelf-renderer, ytd-reel-shelf-renderer, ytd-video-renderer, ytd-compact-video-renderer, ytd-grid-video-renderer, ytd-guide-entry-renderer, ytd-mini-guide-entry-renderer"
-        );
-        const target = renderer || el;
-        target.style.display = "none";
-      });
-    });
-
-    // Redirect away from /shorts/ URLs
     if (window.location.pathname.startsWith("/shorts/")) {
-      const videoId = window.location.pathname.split("/shorts/")[1]?.split("?")[0];
+      const videoId = window.location.pathname.split("/shorts/")[1]?.split(/[?#/]/)[0];
       if (videoId) {
         window.location.replace("/watch?v=" + videoId);
       } else {
@@ -44,22 +74,56 @@
     }
   }
 
-  function showShorts() {
-    SHORTS_SELECTORS.forEach((selector) => {
-      document.querySelectorAll(selector).forEach((el) => {
-        const renderer = el.closest(
-          "ytd-rich-shelf-renderer, ytd-reel-shelf-renderer, ytd-video-renderer, ytd-compact-video-renderer, ytd-grid-video-renderer, ytd-guide-entry-renderer, ytd-mini-guide-entry-renderer"
-        );
-        const target = renderer || el;
-        target.style.display = "";
-      });
+  // Also hide via JS for elements that :has() can't reach or for older browsers
+  function hideShortsByJS() {
+    if (!enabled) return;
+
+    // Hide any link containers pointing to shorts
+    document.querySelectorAll('a[href*="/shorts/"]').forEach((link) => {
+      const renderer = link.closest(
+        "ytd-rich-item-renderer, ytd-video-renderer, ytd-compact-video-renderer, ytd-grid-video-renderer, ytd-rich-section-renderer, ytd-reel-item-renderer"
+      );
+      if (renderer) renderer.style.display = "none";
     });
+
+    // Hide Shorts guide entries
+    document
+      .querySelectorAll(
+        'ytd-guide-entry-renderer a[title="Shorts"], ytd-mini-guide-entry-renderer a[title="Shorts"]'
+      )
+      .forEach((el) => {
+        const entry = el.closest("ytd-guide-entry-renderer, ytd-mini-guide-entry-renderer");
+        if (entry) entry.style.display = "none";
+      });
+  }
+
+  function showShortsByJS() {
+    document
+      .querySelectorAll(
+        "ytd-rich-item-renderer, ytd-video-renderer, ytd-compact-video-renderer, ytd-grid-video-renderer, ytd-rich-section-renderer, ytd-reel-item-renderer, ytd-guide-entry-renderer, ytd-mini-guide-entry-renderer"
+      )
+      .forEach((el) => {
+        if (el.style.display === "none") {
+          el.style.display = "";
+        }
+      });
+  }
+
+  function activate() {
+    enableCSS();
+    hideShortsByJS();
+    redirectIfShorts();
+  }
+
+  function deactivate() {
+    disableCSS();
+    showShortsByJS();
   }
 
   // Load saved state
   chrome.storage.sync.get(STORAGE_KEY, (result) => {
     enabled = result[STORAGE_KEY] !== false;
-    if (enabled) hideShorts();
+    if (enabled) activate();
   });
 
   // Listen for toggle changes
@@ -67,31 +131,28 @@
     if (changes[STORAGE_KEY]) {
       enabled = changes[STORAGE_KEY].newValue !== false;
       if (enabled) {
-        hideShorts();
+        activate();
       } else {
-        showShorts();
+        deactivate();
       }
     }
   });
 
   // Observe DOM changes for dynamically loaded content
   const observer = new MutationObserver(() => {
-    if (enabled) hideShorts();
+    if (enabled) {
+      hideShortsByJS();
+      redirectIfShorts();
+    }
   });
 
   observer.observe(document.body, { childList: true, subtree: true });
 
-  // Also run on navigation (YouTube is a SPA)
-  let lastUrl = location.href;
-  const urlObserver = new MutationObserver(() => {
-    if (location.href !== lastUrl) {
-      lastUrl = location.href;
-      if (enabled) hideShorts();
+  // Listen for YouTube SPA navigation via yt-navigate-finish event
+  window.addEventListener("yt-navigate-finish", () => {
+    if (enabled) {
+      hideShortsByJS();
+      redirectIfShorts();
     }
-  });
-  urlObserver.observe(document.querySelector("title") || document.head, {
-    childList: true,
-    subtree: true,
-    characterData: true,
   });
 })();

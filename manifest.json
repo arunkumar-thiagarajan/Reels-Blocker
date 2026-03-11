@@ -21,7 +21,8 @@
     {
       "matches": ["*://*.youtube.com/*"],
       "js": ["content/youtube.js"],
-      "run_at": "document_idle"
+      "css": ["content/youtube-early.css"],
+      "run_at": "document_start"
     },
     {
       "matches": ["*://*.instagram.com/*"],
