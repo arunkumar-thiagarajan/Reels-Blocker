@@ -5,18 +5,29 @@ A Safari Web Extension that blocks Instagram Reels and Facebook Reels to reduce 
 ## Requirements
 
 - macOS 13.0 or later
-- Xcode 15.0 or later
+- Xcode 15.0 or later (with command line tools)
 - Safari 17.0 or later
 
 ## Build & Install
 
-1. Open `Reels Blocker.xcodeproj` in Xcode
-2. Select the **Reels Blocker** scheme
-3. Click **Product > Build** (Cmd+B)
-4. Click **Product > Run** (Cmd+R) to launch the host app
-5. The host app will prompt you to enable the extension in Safari
+### Step 1: Generate the Xcode Project
 
-## Enable the Extension in Safari
+Run the converter script to create a proper Xcode project from the web extension source:
+
+```bash
+cd "Reels Blocker Safari"
+./convert.sh
+```
+
+This uses Apple's `safari-web-extension-converter` to generate a complete Xcode project at `Xcode/Reels Blocker/`.
+
+### Step 2: Build in Xcode
+
+1. Open `Xcode/Reels Blocker/Reels Blocker.xcodeproj`
+2. Set your **Development Team** in both targets' Signing & Capabilities
+3. Click **Product > Run** (Cmd+R)
+
+### Step 3: Enable in Safari
 
 1. Open **Safari > Settings > Extensions**
 2. Check the box next to **Reels Blocker**
@@ -27,8 +38,9 @@ A Safari Web Extension that blocks Instagram Reels and Facebook Reels to reduce 
 To test changes during development:
 
 1. In Safari, enable **Develop > Allow Unsigned Extensions**
-2. Build and run from Xcode
-3. The extension reloads automatically when you rebuild
+2. Edit files in `Reels Blocker Extension/Resources/`
+3. Re-run `./convert.sh` to regenerate the Xcode project
+4. Build and run from Xcode
 
 ## How It Works
 
@@ -39,26 +51,16 @@ The extension uses content scripts to:
 
 Toggle blocking per-platform using the extension popup in Safari's toolbar.
 
-## Project Structure
+## Source Structure
 
 ```
-Reels Blocker/              # macOS host application
-  AppDelegate.swift         # App lifecycle
-  ViewController.swift      # Main window with extension status
-  Main.storyboard           # UI layout
+Reels Blocker Extension/Resources/   # Web extension source (edit these)
+  manifest.json                      # Extension manifest (MV3)
+  popup/                             # Popup UI (HTML/CSS/JS)
+  content/                           # Content scripts
+    instagram.js                     # Instagram Reels blocker
+    facebook.js                      # Facebook Reels blocker
+  icons/                             # Extension icons
 
-Reels Blocker Extension/    # Safari Web Extension
-  SafariWebExtensionHandler.swift  # Native message handler
-  Resources/
-    manifest.json           # Web extension manifest (MV3)
-    popup/                  # Extension popup UI
-    content/                # Content scripts (instagram.js, facebook.js)
-    icons/                  # Extension icons
+convert.sh                          # Generates Xcode project from source
 ```
-
-## Signing
-
-For distribution, you'll need to:
-1. Set your Development Team in both targets' Signing & Capabilities
-2. Update the bundle identifiers if needed
-3. The extension bundle ID must be a child of the app bundle ID
