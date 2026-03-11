@@ -1,43 +1,79 @@
 /* Injected at document_start to hide Shorts before they render */
 
-/* Shorts shelf on home/subscriptions */
+/* === SIDEBAR NAVIGATION === */
+/* Hide Shorts entry in full sidebar and mini sidebar */
+/* Target by href since title may be localized */
+ytd-guide-entry-renderer:has(a[href="/shorts"]),
+ytd-mini-guide-entry-renderer:has(a[href="/shorts"]),
+ytd-guide-entry-renderer:has(a[title="Shorts"]),
+ytd-mini-guide-entry-renderer:has(a[title="Shorts"]) {
+  display: none !important;
+}
+
+/* === HOME PAGE / SUBSCRIPTIONS SHORTS SHELF === */
 ytd-rich-shelf-renderer[is-shorts],
+ytd-rich-shelf-renderer:has(a[href*="/shorts"]),
 ytd-reel-shelf-renderer {
   display: none !important;
 }
 
-/* Shorts in sidebar navigation */
-ytd-guide-entry-renderer a[title="Shorts"],
-ytd-mini-guide-entry-renderer a[title="Shorts"] {
+/* Modern Shorts section container */
+ytd-rich-section-renderer[is-shorts],
+ytd-rich-section-renderer:has(a[href*="/shorts"]),
+ytd-rich-section-renderer:has(ytd-reel-item-renderer) {
   display: none !important;
 }
 
-/* Shorts in feeds, search results, recommendations */
-ytd-video-renderer:has(a[href*="/shorts/"]),
-ytd-compact-video-renderer:has(a[href*="/shorts/"]),
-ytd-grid-video-renderer:has(a[href*="/shorts/"]),
+/* Individual Shorts items in feeds */
+ytd-rich-item-renderer:has(a[href*="/shorts"]),
 ytd-rich-item-renderer:has(a[href*="/shorts/"]) {
   display: none !important;
 }
 
-/* Shorts sections and individual reel items */
-ytd-rich-section-renderer:has(a[href*="/shorts/"]),
+/* === SEARCH RESULTS === */
+ytd-video-renderer:has(a[href*="/shorts/"]),
+ytd-video-renderer:has(a[href*="/shorts"]) {
+  display: none !important;
+}
+
+/* Shorts shelf in search results */
+ytd-reel-shelf-renderer {
+  display: none !important;
+}
+
+/* === RECOMMENDATIONS / SIDEBAR === */
+ytd-compact-video-renderer:has(a[href*="/shorts/"]),
+ytd-grid-video-renderer:has(a[href*="/shorts/"]) {
+  display: none !important;
+}
+
+/* === REEL ITEMS (used in multiple contexts) === */
 ytd-reel-item-renderer {
   display: none !important;
 }
 
-/* Shorts chip filter */
-yt-chip-cloud-chip-renderer:has([title="Shorts"]) {
+/* === SHORTS CHIP/FILTER === */
+yt-chip-cloud-chip-renderer:has([title="Shorts"]),
+iron-selector yt-chip-cloud-chip-renderer:has(a[href*="/shorts"]) {
   display: none !important;
 }
 
-/* Shorts tab on channel pages */
+/* === CHANNEL PAGE SHORTS TAB === */
 yt-tab-shape[tab-title="Shorts"],
 tp-yt-paper-tab:has(a[href*="/shorts"]) {
   display: none !important;
 }
 
-/* Shorts page player */
-ytd-shorts {
+/* === SHORTS PLAYER PAGE === */
+ytd-shorts,
+ytd-shorts-video-renderer,
+#shorts-container {
+  display: none !important;
+}
+
+/* === CATCH-ALL: any remaining link to /shorts === */
+/* Hide any thumbnail/card overlay linking to shorts */
+a[href^="/shorts/"] ytd-thumbnail,
+a[href^="/shorts/"] #thumbnail {
   display: none !important;
 }
