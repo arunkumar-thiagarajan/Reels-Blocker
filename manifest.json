@@ -1,0 +1,42 @@
+{
+  "manifest_version": 3,
+  "name": "Reels & Shorts Blocker",
+  "version": "1.0.0",
+  "description": "Block Instagram Reels, YouTube Shorts, Facebook Reels, and TikTok to reduce doomscrolling.",
+  "permissions": ["storage", "activeTab"],
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://*.youtube.com/*"],
+      "js": ["content/youtube.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["*://*.instagram.com/*"],
+      "js": ["content/instagram.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["*://*.facebook.com/*"],
+      "js": ["content/facebook.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["*://*.tiktok.com/*"],
+      "js": ["content/tiktok.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
