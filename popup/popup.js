@@ -2,10 +2,8 @@
   "use strict";
 
   const platforms = [
-    { id: "youtube", key: "reelsBlocker_youtube" },
     { id: "instagram", key: "reelsBlocker_instagram" },
     { id: "facebook", key: "reelsBlocker_facebook" },
-    { id: "tiktok", key: "reelsBlocker_tiktok" },
   ];
 
   const toggleAllBtn = document.getElementById("toggle-all");
